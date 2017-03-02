@@ -1,6 +1,6 @@
 package golisp
 
-type code []inst
+type Code []inst
 
 type inst interface {}
 
@@ -14,12 +14,12 @@ type ldv struct {
 
 type ldf struct {
 	pattern pattern
-	code code
+	code Code
 }
 
 type ldm struct {
 	pattern pattern
-	code code
+	code Code
 }
 
 type ldb struct {
@@ -27,7 +27,7 @@ type ldb struct {
 }
 
 type sel struct {
-	a, b code
+	a, b Code
 }
 
 type app struct {

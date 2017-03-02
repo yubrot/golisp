@@ -31,28 +31,28 @@ type State struct {
 type Cont struct {
 	stack []Value
 	env *Env
-	code code
+	code Code
 	dump []dump
 }
 
 type dump struct {
 	env *Env
-	code code
+	code Code
 }
 
 type SyntaxImpl interface {
 	Expand(context *Context, args []Value)
-	Compile(compileEnv *Env, args []Value) code
+	Compile(compileEnv *Env, args []Value) Code
 }
 
 type BuiltinImpl interface {
 	Run(state *State, args []Value)
 }
 
-func compile(compileEnv *Env, expr Value) code {
+func compile(compileEnv *Env, expr Value) Code {
 	switch expr := expr.(type) {
 	case Sym:
-		return code{ldv{expr.Data}}
+		return Code{ldv{expr.Data}}
 
 	case Cons:
 		slice, ok := Slice(expr)
@@ -65,7 +65,7 @@ func compile(compileEnv *Env, expr Value) code {
 			return syntax.Compile(compileEnv, args)
 		}
 
-		code := code{}
+		code := Code{}
 		for _, v := range slice {
 			c := compile(compileEnv, v)
 			code = append(code, c...)
@@ -73,7 +73,7 @@ func compile(compileEnv *Env, expr Value) code {
 		return append(code, app{len(slice) - 1})
 
 	default:
-		return code{ldc{expr}}
+		return Code{ldc{expr}}
 	}
 }
 
@@ -90,7 +90,7 @@ func (state *State) pop() Value {
 	return ret
 }
 
-func (state *State) enter(env *Env, code code) {
+func (state *State) enter(env *Env, code Code) {
 	skipThisFrame := false
 	if len(state.code) == 1 {
 		_, skipThisFrame = state.code[0].(leave)
@@ -186,7 +186,7 @@ func (state *State) runInst(i inst) {
 		state.Push(builtin{impl})
 
 	case sel:
-		var branchCode code
+		var branchCode Code
 		if Test(state.pop()) {
 			branchCode = i.a
 		} else {
@@ -227,19 +227,12 @@ func (state *State) run() Value {
 	return state.pop()
 }
 
-func NewContext() *Context {
-	return &Context{
-		toplevel: NewEnv(syntaxEnv()),
-		Builtins: map[string]BuiltinImpl{},
-	}
-}
-
-func (context *Context) exec(env *Env, code code) Value {
+func (context *Context) exec(env *Env, code Code) Value {
 	state := State{Cont{env: env, code: code}, context}
 	return state.run()
 }
 
-func (context *Context) MacroExpand(recurse bool, expr Value) Value {
+func (context *Context) macroExpand(recurse bool, expr Value) Value {
 	slice, ok := Slice(expr)
 	if ok && len(slice) != 0 {
 		args := slice[1:]
@@ -249,7 +242,7 @@ func (context *Context) MacroExpand(recurse bool, expr Value) Value {
 			m.pattern.bind(args, env)
 			expr = context.exec(env, m.code)
 			if !recurse { return expr }
-			return context.MacroExpand(true, expr)
+			return context.macroExpand(true, expr)
 
 		case syntax:
 			if !recurse { return expr }
@@ -266,36 +259,45 @@ func (context *Context) macroExpandChildren(expr Value) Value {
 	cons, ok := expr.(Cons)
 	if !ok { return expr }
 	return Cons{
-		Car: context.MacroExpand(true, cons.Car),
+		Car: context.macroExpand(true, cons.Car),
 		Cdr: context.macroExpandChildren(cons.Cdr),
 	}
 }
 
-func (context *Context) Eval(expr Value) (result Value, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			var ok bool
-			err, ok = r.(error)
-			if !ok {
-				err = InternalError{fmt.Sprintf("panic: %v", r)}
-			}
+func recoverContext(err *error) {
+	if r := recover(); r != nil {
+		var ok bool
+		*err, ok = r.(error)
+		if !ok {
+			*err = InternalError{fmt.Sprintf("panic: %v", r)}
 		}
-	}()
+	}
+	return
+}
 
-	expr = context.MacroExpand(true, expr)
-	/*
-	fmt.Println("Macro expanded:")
-	fmt.Println(expr.Inspect())
-	*/
+func NewContext() *Context {
+	return &Context{
+		toplevel: NewEnv(syntaxEnv()),
+		Builtins: map[string]BuiltinImpl{},
+	}
+}
+
+func (context *Context) Compile(expr Value) (result Code, err error) {
+	defer recoverContext(&err)
+	result = compile(context.toplevel, expr)
+	return
+}
+
+func (context *Context) MacroExpand(recurse bool, expr Value) (result Value, err error) {
+	defer recoverContext(&err)
+	result = context.macroExpand(recurse, expr)
+	return
+}
+
+func (context *Context) Eval(expr Value) (result Value, err error) {
+	defer recoverContext(&err)
+	expr = context.macroExpand(true, expr)
 	code := compile(context.toplevel, expr)
-	/*
-	fmt.Println("Compiled VM code:")
-	fmt.Println(PrintCode(code))
-	*/
 	result = context.exec(context.toplevel, code)
-	/*
-	fmt.Println("Result:")
-	fmt.Println(result.Inspect())
-	*/
 	return
 }

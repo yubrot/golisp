@@ -33,7 +33,7 @@ func buildPattern(value Value) (pattern pattern) {
 }
 
 func (pattern pattern) bind(args []Value, env *Env) {
-	if len(args) < len(pattern.fixed) {
+	if len(args) < len(pattern.fixed) || (len(args) > len(pattern.fixed) && pattern.rest == "") {
 		var prefix string
 		if pattern.rest == "" { prefix = "at least " }
 		panic(EvaluationError{"This function takes " + prefix + strconv.Itoa(len(pattern.fixed)) + " arguments"})

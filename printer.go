@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-func PrintCode(code code) string {
+func PrintCode(code Code) string {
 	printer := &codePrinter{id: 0}
 	printer.putBlock("entry", code)
 	return printer.print()
@@ -24,7 +24,7 @@ func (printer *codePrinter) print() string {
 	return ret.String()
 }
 
-func (printer *codePrinter) putBlock(header string, code code) string {
+func (printer *codePrinter) putBlock(header string, code Code) string {
 	id := "[" + strconv.Itoa(printer.id) + " " + header + "]"
 	block := &bytes.Buffer{}
 	printer.id += 1

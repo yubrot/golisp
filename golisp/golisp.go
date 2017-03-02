@@ -12,11 +12,16 @@ import (
 
 func main() {
 	context := golisp.NewContext()
-	boot(context)
 
-	if len(os.Args) == 2 {
+	if len(os.Args) == 3 && os.Args[1] == "-test" {
+		registerBuiltins(context)
+		RunTest(context, os.Args[2])
+
+	} else if len(os.Args) == 2 {
+		boot(context)
 		execFile(context, os.Args[1])
 	} else {
+		boot(context)
 		repl(context)
 	}
 }
@@ -57,12 +62,12 @@ func exec(context *golisp.Context, buf *bufio.Reader) error {
 }
 
 func repl(context *golisp.Context) {
-	fmt.Println("[golisp REPL]")
-	fmt.Print("> ")
+	fmt.Fprintln(os.Stderr, "[golisp REPL]")
+	fmt.Fprint(os.Stderr, "> ")
 
 	stdin := bufio.NewReader(os.Stdin)
 	golisp.RunParser(stdin, func(expr golisp.Value, err error) (never error) {
-		defer fmt.Print("> ")
+		defer fmt.Fprint(os.Stderr, "> ")
 
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)

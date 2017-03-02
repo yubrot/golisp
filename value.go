@@ -15,7 +15,7 @@ type Meta interface {
 type fun struct {
 	env *Env
 	pattern pattern
-	code code
+	code Code
 }
 
 type builtin struct {
@@ -25,7 +25,7 @@ type builtin struct {
 type macro struct {
 	env *Env
 	pattern pattern
-	code code
+	code Code
 }
 
 type syntax struct {

@@ -1,11 +1,11 @@
 package main
 
 import (
-	. "github.com/yubrot/golisp"
 	"os"
 	"bytes"
 	"fmt"
 	"math"
+	. "github.com/yubrot/golisp"
 )
 
 func registerBuiltins(context *Context) {
@@ -253,7 +253,7 @@ func (_ mul) fold(l, r float64) float64 { return l * r }
 type div struct {}
 
 func (_ div) zero() (float64, bool) { return 0, false }
-func (_ div) one(num float64) float64 { return num }
+func (_ div) one(num float64) float64 { return 1 / num }
 func (_ div) fold(l, r float64) float64 { return l / r }
 
 type mod struct {}
@@ -406,8 +406,11 @@ type builtinEval struct {}
 func (_ builtinEval) Run(state *State, args []Value) {
 	if len(args) == 1 {
 		ret, err := state.Context.Eval(args[0])
-		if err != nil { evaluationError("on eval: " + err.Error()) }
-		state.Push(ret)
+		if err == nil {
+			state.Push(Cons{Bool{true}, ret})
+		} else {
+			state.Push(Cons{Bool{false}, Str{err.Error()}})
+		}
 		return
 	}
 	evaluationError("Builtin function eval takes one argument")
@@ -420,8 +423,12 @@ type builtinMacroExpand struct {
 
 func (expand builtinMacroExpand) Run(state *State, args []Value) {
 	if len(args) == 1 {
-		ret := state.Context.MacroExpand(expand.recurse, args[0])
-		state.Push(ret)
+		ret, err := state.Context.MacroExpand(expand.recurse, args[0])
+		if err == nil {
+			state.Push(Cons{Bool{true}, ret})
+		} else {
+			state.Push(Cons{Bool{false}, Str{err.Error()}})
+		}
 		return
 	}
 	evaluationError("Builtin function " + expand.name + " takes one argument")

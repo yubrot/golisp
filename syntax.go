@@ -18,20 +18,20 @@ type noexpandFirst struct {}
 
 func (_ expandAll) Expand(context *Context, args []Value) {
 	for i, arg := range args {
-		args[i] = context.MacroExpand(true, arg)
+		args[i] = context.macroExpand(true, arg)
 	}
 }
 
 func (_ noexpandFirst) Expand(context *Context, args []Value) {
 	for i, arg := range args {
 		if i == 0 { continue }
-		args[i] = context.MacroExpand(true, arg)
+		args[i] = context.macroExpand(true, arg)
 	}
 }
 
 type syntaxDef struct { noexpandFirst }
 
-func (_ syntaxDef) Compile(compileEnv *Env, args []Value) code {
+func (_ syntaxDef) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) == 2 {
 		if sym, ok := args[0].(Sym); ok {
 			return append(compile(compileEnv, args[1]), def{sym.Data}, ldc{Nil{}})
@@ -42,7 +42,7 @@ func (_ syntaxDef) Compile(compileEnv *Env, args []Value) code {
 
 type syntaxSet struct { noexpandFirst }
 
-func (_ syntaxSet) Compile(compileEnv *Env, args []Value) code {
+func (_ syntaxSet) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) == 2 {
 		if sym, ok := args[0].(Sym); ok {
 			return append(compile(compileEnv, args[1]), set{sym.Data}, ldc{Nil{}})
@@ -53,9 +53,9 @@ func (_ syntaxSet) Compile(compileEnv *Env, args []Value) code {
 
 type syntaxBegin struct { expandAll }
 
-func (_ syntaxBegin) Compile(compileEnv *Env, args []Value) code {
+func (_ syntaxBegin) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) == 0 {
-		return code{ldc{Nil{}}}
+		return Code{ldc{Nil{}}}
 	}
 
 	c := compile(compileEnv, args[0])
@@ -68,7 +68,7 @@ func (_ syntaxBegin) Compile(compileEnv *Env, args []Value) code {
 
 type syntaxIf struct { expandAll }
 
-func (_ syntaxIf) Compile(compileEnv *Env, args []Value) code {
+func (_ syntaxIf) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) == 3 {
 		return append(
 			compile(compileEnv, args[0]),
@@ -83,12 +83,12 @@ func (_ syntaxIf) Compile(compileEnv *Env, args []Value) code {
 
 type syntaxFun struct { noexpandFirst }
 
-func (_ syntaxFun) Compile(compileEnv *Env, args []Value) code {
+func (_ syntaxFun) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) > 0 {
 		pat := buildPattern(args[0])
 		body := syntaxBegin{}.Compile(compileEnv, args[1:])
 		body = append(body, leave{})
-		return code{ldf{pat, body}}
+		return Code{ldf{pat, body}}
 	}
 
 	panic(EvaluationError{"Syntax error: expected (fun pattern body...)"})
@@ -96,11 +96,11 @@ func (_ syntaxFun) Compile(compileEnv *Env, args []Value) code {
 
 type syntaxMacro struct { noexpandFirst }
 
-func (_ syntaxMacro) Compile(compileEnv *Env, args []Value) code {
+func (_ syntaxMacro) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) > 0 {
 		pat := buildPattern(args[0])
 		body := syntaxBegin{}.Compile(compileEnv, args[1:])
-		return code{ldm{pat, body}}
+		return Code{ldm{pat, body}}
 	}
 
 	panic(EvaluationError{"Syntax error: expected (macro pattern body...)"})
@@ -108,10 +108,10 @@ func (_ syntaxMacro) Compile(compileEnv *Env, args []Value) code {
 
 type syntaxBuiltin struct { noexpandFirst }
 
-func (_ syntaxBuiltin) Compile(compileEnv *Env, args []Value) code {
+func (_ syntaxBuiltin) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) == 1 {
 		if sym, ok := args[0].(Sym); ok {
-			return code{ldb{sym.Data}}
+			return Code{ldb{sym.Data}}
 		}
 	}
 	panic(EvaluationError{"Syntax error: expected (builtin sym)"})
@@ -119,9 +119,9 @@ func (_ syntaxBuiltin) Compile(compileEnv *Env, args []Value) code {
 
 type syntaxQuote struct { noexpandFirst }
 
-func (_ syntaxQuote) Compile(compileEnv *Env, args []Value) code {
+func (_ syntaxQuote) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) == 1 {
-		return code{ldc{args[0]}}
+		return Code{ldc{args[0]}}
 	}
 	panic(EvaluationError{"Syntax error: expected (quote expr)"})
 }
