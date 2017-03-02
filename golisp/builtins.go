@@ -1,11 +1,11 @@
 package main
 
 import (
-	"os"
 	"bytes"
 	"fmt"
-	"math"
 	. "github.com/yubrot/golisp"
+	"math"
+	"os"
 )
 
 func registerBuiltins(context *Context) {
@@ -57,7 +57,7 @@ func registerBuiltins(context *Context) {
 	context.Builtins["inspect"] = builtinInspect{}
 }
 
-type builtinCons struct {}
+type builtinCons struct{}
 
 func (_ builtinCons) Run(state *State, args []Value) {
 	if len(args) == 2 {
@@ -67,7 +67,7 @@ func (_ builtinCons) Run(state *State, args []Value) {
 	evaluationError("Builtin function cons takes 2 arguments")
 }
 
-type builtinExit struct {}
+type builtinExit struct{}
 
 func (_ builtinExit) Run(state *State, args []Value) {
 	if len(args) == 0 {
@@ -81,7 +81,7 @@ func (_ builtinExit) Run(state *State, args []Value) {
 	evaluationError("Builtin function exit takes a number argument")
 }
 
-type builtinError struct {}
+type builtinError struct{}
 
 func (_ builtinError) Run(state *State, args []Value) {
 	if len(args) == 0 {
@@ -108,7 +108,7 @@ func (gensym *builtinGensym) Run(state *State, args []Value) {
 	evaluationError("Builtin function gensym takes no arguments")
 }
 
-type builtinCar struct {}
+type builtinCar struct{}
 
 func (_ builtinCar) Run(state *State, args []Value) {
 	if len(args) == 1 {
@@ -121,7 +121,7 @@ func (_ builtinCar) Run(state *State, args []Value) {
 	evaluationError("Builtin function car takes one argument")
 }
 
-type builtinCdr struct {}
+type builtinCdr struct{}
 
 func (_ builtinCdr) Run(state *State, args []Value) {
 	if len(args) == 1 {
@@ -134,7 +134,7 @@ func (_ builtinCdr) Run(state *State, args []Value) {
 	evaluationError("Builtin function cdr takes one argument")
 }
 
-type builtinApply struct {}
+type builtinApply struct{}
 
 func (_ builtinApply) Run(state *State, args []Value) {
 	if len(args) == 2 {
@@ -232,46 +232,48 @@ type arithmeticImpl interface {
 	fold(l, r float64) float64
 }
 
-type add struct {}
+type add struct{}
 
-func (_ add) zero() (float64, bool) { return 0, true }
-func (_ add) one(num float64) float64 { return num }
+func (_ add) zero() (float64, bool)     { return 0, true }
+func (_ add) one(num float64) float64   { return num }
 func (_ add) fold(l, r float64) float64 { return l + r }
 
-type sub struct {}
+type sub struct{}
 
-func (_ sub) zero() (float64, bool) { return 0, false }
-func (_ sub) one(num float64) float64 { return -num }
+func (_ sub) zero() (float64, bool)     { return 0, false }
+func (_ sub) one(num float64) float64   { return -num }
 func (_ sub) fold(l, r float64) float64 { return l - r }
 
-type mul struct {}
+type mul struct{}
 
-func (_ mul) zero() (float64, bool) { return 1, true }
-func (_ mul) one(num float64) float64 { return num }
+func (_ mul) zero() (float64, bool)     { return 1, true }
+func (_ mul) one(num float64) float64   { return num }
 func (_ mul) fold(l, r float64) float64 { return l * r }
 
-type div struct {}
+type div struct{}
 
-func (_ div) zero() (float64, bool) { return 0, false }
-func (_ div) one(num float64) float64 { return 1 / num }
+func (_ div) zero() (float64, bool)     { return 0, false }
+func (_ div) one(num float64) float64   { return 1 / num }
 func (_ div) fold(l, r float64) float64 { return l / r }
 
-type mod struct {}
+type mod struct{}
 
-func (_ mod) zero() (float64, bool) { return 0, false }
-func (_ mod) one(num float64) float64 { return num }
+func (_ mod) zero() (float64, bool)     { return 0, false }
+func (_ mod) one(num float64) float64   { return num }
 func (_ mod) fold(l, r float64) float64 { return math.Mod(l, r) }
 
-type builtinConcat struct {}
+type builtinConcat struct{}
 
 func (_ builtinConcat) Run(state *State, args []Value) {
 	strs := extractStrings("concat", args)
 	var buf bytes.Buffer
-	for _, str := range strs { buf.WriteString(str) }
+	for _, str := range strs {
+		buf.WriteString(str)
+	}
 	state.Push(Str{buf.String()})
 }
 
-type builtinLength struct {}
+type builtinLength struct{}
 
 func (_ builtinLength) Run(state *State, args []Value) {
 	if len(args) == 1 {
@@ -283,7 +285,7 @@ func (_ builtinLength) Run(state *State, args []Value) {
 	evaluationError("Builtin function length takes a string argument")
 }
 
-type builtinEq struct {}
+type builtinEq struct{}
 
 func (eq builtinEq) Run(state *State, args []Value) {
 	if len(args) >= 1 {
@@ -359,7 +361,7 @@ func (compare builtinCompare) Run(state *State, args []Value) {
 			}
 
 		default:
-			typeError("Operator " + compare.name + " is only defined for strings and numbers", args[0])
+			typeError("Operator "+compare.name+" is only defined for strings and numbers", args[0])
 		}
 	}
 	state.Push(Bool{true})
@@ -390,7 +392,7 @@ func gt(compareResult int) bool { return compareResult == 1 }
 func le(compareResult int) bool { return compareResult != 1 }
 func ge(compareResult int) bool { return compareResult != -1 }
 
-type builtinCallCC struct {}
+type builtinCallCC struct{}
 
 func (_ builtinCallCC) Run(state *State, args []Value) {
 	if len(args) == 1 {
@@ -401,7 +403,7 @@ func (_ builtinCallCC) Run(state *State, args []Value) {
 	evaluationError("Builtin function call/cc takes one argument")
 }
 
-type builtinEval struct {}
+type builtinEval struct{}
 
 func (_ builtinEval) Run(state *State, args []Value) {
 	if len(args) == 1 {
@@ -417,7 +419,7 @@ func (_ builtinEval) Run(state *State, args []Value) {
 }
 
 type builtinMacroExpand struct {
-	name string
+	name    string
 	recurse bool
 }
 
@@ -434,18 +436,20 @@ func (expand builtinMacroExpand) Run(state *State, args []Value) {
 	evaluationError("Builtin function " + expand.name + " takes one argument")
 }
 
-type builtinPrint struct {}
+type builtinPrint struct{}
 
 func (_ builtinPrint) Run(state *State, args []Value) {
 	for _, arg := range args {
 		str, ok := arg.(Str)
-		if !ok { typeError("Cannot print non-string argument", arg) }
+		if !ok {
+			typeError("Cannot print non-string argument", arg)
+		}
 		fmt.Print(str.Data)
 	}
 	state.Push(Nil{})
 }
 
-type builtinNewline struct {}
+type builtinNewline struct{}
 
 func (_ builtinNewline) Run(state *State, args []Value) {
 	if len(args) == 0 {
@@ -456,7 +460,7 @@ func (_ builtinNewline) Run(state *State, args []Value) {
 	evaluationError("Builtin function newline takes no arguments")
 }
 
-type builtinInspect struct {}
+type builtinInspect struct{}
 
 func (_ builtinInspect) Run(state *State, args []Value) {
 	if len(args) == 1 {
@@ -474,7 +478,7 @@ func extractNumbers(op string, args []Value) []float64 {
 			ret[i] = arg.Data
 
 		default:
-			typeError("Operator " + op + " takes number arguments", arg)
+			typeError("Operator "+op+" takes number arguments", arg)
 		}
 	}
 	return ret
@@ -488,7 +492,7 @@ func extractStrings(op string, args []Value) []string {
 			ret[i] = arg.Data
 
 		default:
-			typeError("Operator " + op + " takes string arguments", arg)
+			typeError("Operator "+op+" takes string arguments", arg)
 		}
 	}
 	return ret

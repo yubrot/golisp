@@ -10,7 +10,7 @@ func (e UndefinedVariable) Error() string {
 
 type Env struct {
 	current map[string]Value
-	parent *Env
+	parent  *Env
 }
 
 func NewEnv(parent *Env) *Env {
@@ -36,7 +36,9 @@ func (env *Env) Set(k string, v Value) {
 func (env *Env) Find(k string) Value {
 	for env != nil {
 		v, ok := env.current[k]
-		if ok { return v }
+		if ok {
+			return v
+		}
 		env = env.parent
 	}
 	return nil
@@ -44,12 +46,16 @@ func (env *Env) Find(k string) Value {
 
 func (env *Env) Get(k string) Value {
 	v := env.Find(k)
-	if v != nil { return v }
+	if v != nil {
+		return v
+	}
 	panic(UndefinedVariable{k})
 }
 
 func (env *Env) refer(v Value) Value {
 	sym, ok := v.(Sym)
-	if !ok { return nil }
+	if !ok {
+		return nil
+	}
 	return env.Find(sym.Data)
 }

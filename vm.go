@@ -20,7 +20,7 @@ func (e InternalError) Error() string {
 
 type Context struct {
 	toplevel *Env
-	Builtins map[string] BuiltinImpl
+	Builtins map[string]BuiltinImpl
 }
 
 type State struct {
@@ -30,13 +30,13 @@ type State struct {
 
 type Cont struct {
 	stack []Value
-	env *Env
-	code Code
-	dump []dump
+	env   *Env
+	code  Code
+	dump  []dump
 }
 
 type dump struct {
-	env *Env
+	env  *Env
 	code Code
 }
 
@@ -241,23 +241,31 @@ func (context *Context) macroExpand(recurse bool, expr Value) Value {
 			env := NewEnv(m.env)
 			m.pattern.bind(args, env)
 			expr = context.exec(env, m.code)
-			if !recurse { return expr }
+			if !recurse {
+				return expr
+			}
 			return context.macroExpand(true, expr)
 
 		case syntax:
-			if !recurse { return expr }
+			if !recurse {
+				return expr
+			}
 			m.Expand(context, args)
 			return List(slice...)
 		}
 	}
 
-	if !recurse { return expr }
+	if !recurse {
+		return expr
+	}
 	return context.macroExpandChildren(expr)
 }
 
 func (context *Context) macroExpandChildren(expr Value) Value {
 	cons, ok := expr.(Cons)
-	if !ok { return expr }
+	if !ok {
+		return expr
+	}
 	return Cons{
 		Car: context.macroExpand(true, cons.Car),
 		Cdr: context.macroExpandChildren(cons.Cdr),

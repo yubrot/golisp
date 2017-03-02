@@ -1,14 +1,14 @@
 package main
 
 import (
-	"os"
 	"bufio"
 	"bytes"
-	"strings"
 	"errors"
 	"fmt"
-	"strconv"
 	"github.com/yubrot/golisp"
+	"os"
+	"strconv"
+	"strings"
 )
 
 type testcase struct {
@@ -21,18 +21,24 @@ func RunTest(context *golisp.Context, file string) {
 	for _, testcase := range testcases {
 		err := testcase.run(context)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Test failed at " + testcase.header + ": " + err.Error())
+			fmt.Fprintln(os.Stderr, "Test failed at "+testcase.header+": "+err.Error())
 		}
 	}
 }
 
 func readLines(scanner *bufio.Scanner, length string) string {
 	l, err := strconv.Atoi(length)
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 	ret := new(bytes.Buffer)
 	for i := 0; i < l; i++ {
-		if !scanner.Scan() { panic("scan") }
-		if i != 0 { ret.WriteString("\n") }
+		if !scanner.Scan() {
+			panic("scan")
+		}
+		if i != 0 {
+			ret.WriteString("\n")
+		}
 		ret.WriteString(scanner.Text())
 	}
 	return ret.String()
@@ -40,7 +46,9 @@ func readLines(scanner *bufio.Scanner, length string) string {
 
 func parseTestcases(file string) []testcase {
 	fp, err := os.Open(file)
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 	defer fp.Close()
 
 	testcases := make([]testcase, 0, 100)
@@ -48,7 +56,9 @@ func parseTestcases(file string) []testcase {
 
 	for scanner.Scan() {
 		header := scanner.Text()
-		if !scanner.Scan() { panic("scan") }
+		if !scanner.Scan() {
+			panic("scan")
+		}
 		command := strings.Split(scanner.Text(), " ")
 		var impl commandImpl
 
@@ -137,7 +147,7 @@ func (cmd compileSuccess) run(context *golisp.Context) (err error) {
 	if err == nil {
 		var code golisp.Code
 		code, err = context.Compile(expr)
-		if err == nil && golisp.PrintCode(code) != cmd.result + "\n" {
+		if err == nil && golisp.PrintCode(code) != cmd.result+"\n" {
 			err = errors.New(golisp.PrintCode(code))
 		}
 	}

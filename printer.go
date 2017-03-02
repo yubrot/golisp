@@ -12,7 +12,7 @@ func PrintCode(code Code) string {
 }
 
 type codePrinter struct {
-	id int
+	id     int
 	blocks []*bytes.Buffer
 }
 
@@ -48,11 +48,11 @@ func (printer *codePrinter) putInst(i inst) string {
 		return "ldv " + i.name
 
 	case ldf:
-		block := printer.putBlock("fun " + i.pattern.String(), i.code)
+		block := printer.putBlock("fun "+i.pattern.String(), i.code)
 		return "ldf " + block
 
 	case ldm:
-		block := printer.putBlock("macro " + i.pattern.String(), i.code)
+		block := printer.putBlock("macro "+i.pattern.String(), i.code)
 		return "ldm " + block
 
 	case ldb:

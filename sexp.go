@@ -19,7 +19,7 @@ type Cons struct {
 	Cdr Value
 }
 
-type Nil struct {}
+type Nil struct{}
 
 type Bool struct {
 	Data bool
@@ -87,7 +87,9 @@ func (str Str) Inspect() string {
 
 func (cons Cons) Inspect() string {
 	ss, ok := cons.inspectSyntaxSugar()
-	if ok { return ss }
+	if ok {
+		return ss
+	}
 	return "(" + cons.inspectInner() + ")"
 }
 

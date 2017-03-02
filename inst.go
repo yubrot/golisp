@@ -2,7 +2,7 @@ package golisp
 
 type Code []inst
 
-type inst interface {}
+type inst interface{}
 
 type ldc struct {
 	value Value
@@ -14,12 +14,12 @@ type ldv struct {
 
 type ldf struct {
 	pattern pattern
-	code Code
+	code    Code
 }
 
 type ldm struct {
 	pattern pattern
-	code Code
+	code    Code
 }
 
 type ldb struct {
@@ -34,9 +34,9 @@ type app struct {
 	argc int
 }
 
-type leave struct {}
+type leave struct{}
 
-type pop struct {}
+type pop struct{}
 
 type def struct {
 	name string

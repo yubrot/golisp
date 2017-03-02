@@ -13,9 +13,9 @@ type Meta interface {
 }
 
 type fun struct {
-	env *Env
+	env     *Env
 	pattern pattern
-	code Code
+	code    Code
 }
 
 type builtin struct {
@@ -23,9 +23,9 @@ type builtin struct {
 }
 
 type macro struct {
-	env *Env
+	env     *Env
 	pattern pattern
-	code Code
+	code    Code
 }
 
 type syntax struct {
@@ -48,8 +48,8 @@ func (_ syntax) Inspect() string {
 	return "<syntax>"
 }
 
-func (_ fun) procValue() {}
+func (_ fun) procValue()     {}
 func (_ builtin) procValue() {}
 
-func (_ macro) metaValue() {}
+func (_ macro) metaValue()  {}
 func (_ syntax) metaValue() {}

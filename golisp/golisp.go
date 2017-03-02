@@ -3,11 +3,11 @@ package main
 //go:generate go-bindata lispboot/boot.lisp
 
 import (
-	"fmt"
-	"bytes"
 	"bufio"
-	"os"
+	"bytes"
+	"fmt"
 	"github.com/yubrot/golisp"
+	"os"
 )
 
 func main() {
@@ -30,11 +30,15 @@ func boot(context *golisp.Context) {
 	registerBuiltins(context)
 
 	data, err := Asset("lispboot/boot.lisp")
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 
 	buf := bufio.NewReader(bytes.NewReader(data))
 	err = exec(context, buf)
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 }
 
 func execFile(context *golisp.Context, file string) {

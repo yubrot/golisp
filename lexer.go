@@ -3,10 +3,10 @@ package golisp
 //go:generate goyacc -o parser.go parser.go.y
 
 import (
-	"errors"
 	"bufio"
-	"unicode"
+	"errors"
 	"strconv"
+	"unicode"
 )
 
 func RunParser(reader *bufio.Reader, handler func(Value, error) error) (err error) {
@@ -14,14 +14,18 @@ func RunParser(reader *bufio.Reader, handler func(Value, error) error) (err erro
 	lex := &lexer{reader: reader}
 	for {
 		lex.skipSpaces()
-		if lex.peek() == eof { break }
+		if lex.peek() == eof {
+			break
+		}
 		yyParse(lex)
 		result := lex.result
 		err = lex.err
 		lex.result = nil
 		lex.err = nil
 		err = handler(result, err)
-		if err != nil { break }
+		if err != nil {
+			break
+		}
 	}
 	return
 }
@@ -34,11 +38,11 @@ type token struct {
 }
 
 type lexer struct {
-	reader *bufio.Reader
+	reader  *bufio.Reader
 	current []rune
 
 	result Value
-	err error
+	err    error
 }
 
 func (l *lexer) Lex(lval *yySymType) int {
@@ -105,11 +109,13 @@ func (l *lexer) next() token {
 			op := l.emit(UNUSED)
 			r := l.nextNum()
 			r.lit = op.lit + r.lit
-			if op.lit == "-" { r.num = -r.num }
+			if op.lit == "-" {
+				r.num = -r.num
+			}
 			return r
 		}
 
-		l.readWhile(func (c rune) bool {
+		l.readWhile(func(c rune) bool {
 			return unicode.IsLetter(c) || unicode.IsDigit(c) || isSpecial(c)
 		})
 		return l.emit(SYM)
@@ -162,13 +168,17 @@ func (l *lexer) nextNum() token {
 	// exp
 	if l.peek() == 'e' || l.peek() == 'E' {
 		l.read()
-		if l.peek() == '-' || l.peek() == '+' { l.read() }
+		if l.peek() == '-' || l.peek() == '+' {
+			l.read()
+		}
 		l.readWhile(unicode.IsDigit)
 	}
 
 	r := l.emit(NUM)
 	num, err := strconv.ParseFloat(r.lit, 64)
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 	r.num = num
 	return r
 }
@@ -212,17 +222,23 @@ func (l *lexer) nextStr() token {
 var eof = rune(0)
 
 func (l *lexer) read() rune {
-	if l.result != nil { return eof }
+	if l.result != nil {
+		return eof
+	}
 
 	c, _, err := l.reader.ReadRune()
-	if err != nil { return eof }
+	if err != nil {
+		return eof
+	}
 
 	l.current = append(l.current, c)
 	return c
 }
 
 func (l *lexer) unread(c rune) {
-	if c == eof { return }
+	if c == eof {
+		return
+	}
 	l.reader.UnreadRune()
 	l.current = l.current[:len(l.current)-1]
 }
@@ -262,9 +278,9 @@ func (l *lexer) fail(msg string) token {
 func isSpecial(c rune) bool {
 	switch c {
 	case '!', '$', '%', '&', '*', '+', '-', '.', '/',
-		 ':', '<', '=', '>', '?', '@', '^', '_', '~':
+		':', '<', '=', '>', '?', '@', '^', '_', '~':
 		return true
-	 default:
+	default:
 		return false
 	}
 }
