@@ -5,54 +5,69 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/yubrot/golisp"
 	"os"
 )
 
 func main() {
-	context := golisp.NewContext()
+	ctx := golisp.NewContext()
 
-	if len(os.Args) == 3 && os.Args[1] == "-test" {
-		registerBuiltins(context)
-		RunTest(context, os.Args[2])
-
-	} else if len(os.Args) == 2 {
-		boot(context)
-		execFile(context, os.Args[1])
+	if len(os.Args) == 0 || len(os.Args) == 1 {
+		initContext(ctx, true, []string{})
+		repl(ctx)
+	} else if os.Args[1] == "-test" {
+		initContext(ctx, false, []string{})
+		for _, test := range os.Args[2:] {
+			RunTest(ctx, test)
+		}
 	} else {
-		boot(context)
-		repl(context)
+		var files, args []string
+		argsStarted := false
+		for _, s := range os.Args[1:] {
+			if argsStarted {
+				args = append(args, s)
+			} else if s == "--" {
+				argsStarted = true
+			} else {
+				files = append(files, s)
+			}
+		}
+		initContext(ctx, true, args)
+		for _, file := range files {
+			execFile(ctx, file)
+		}
 	}
 }
 
-func boot(context *golisp.Context) {
-	registerBuiltins(context)
+func initContext(ctx *golisp.Context, boot bool, args []string) {
+	registerBuiltins(ctx, args)
+	if boot {
+		data, err := Asset("lispboot/boot.lisp")
+		if err != nil {
+			panic(err)
+		}
 
-	data, err := Asset("lispboot/boot.lisp")
-	if err != nil {
-		panic(err)
-	}
-
-	buf := bufio.NewReader(bytes.NewReader(data))
-	err = exec(context, buf)
-	if err != nil {
-		panic(err)
+		buf := bufio.NewReader(bytes.NewReader(data))
+		err = exec(ctx, buf)
+		if err != nil {
+			panic(errors.New("initContext: " + err.Error()))
+		}
 	}
 }
 
 func execFile(context *golisp.Context, file string) {
 	fp, err := os.Open(file)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
+		panic(errors.New(file + ": " + err.Error()))
 	}
 	defer fp.Close()
 
 	buf := bufio.NewReader(fp)
 	err = exec(context, buf)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		panic(errors.New(file + ": " + err.Error()))
 	}
 }
 

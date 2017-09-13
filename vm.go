@@ -127,6 +127,13 @@ func (state *State) Apply(f Value, args ...Value) {
 	}
 }
 
+func (state *State) ApplyNever(f Value, args ...Value) {
+	state.stack = nil
+	state.code = Code{leave{}}
+	state.dump = nil
+	state.Apply(f, args...)
+}
+
 func (dest *Cont) copy(src Cont) {
 	copied := copy(dest.stack, src.stack)
 	if copied < len(src.stack) {

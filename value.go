@@ -32,6 +32,10 @@ type syntax struct {
 	SyntaxImpl
 }
 
+type Vec struct {
+	Payload []Value
+}
+
 func (_ fun) Inspect() string {
 	return "<fun>"
 }
@@ -46,6 +50,10 @@ func (_ macro) Inspect() string {
 
 func (_ syntax) Inspect() string {
 	return "<syntax>"
+}
+
+func (vec Vec) Inspect() string {
+	return Cons{Sym{"vec"}, List(vec.Payload...)}.Inspect()
 }
 
 func (_ fun) procValue()     {}
