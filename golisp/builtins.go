@@ -481,7 +481,7 @@ func (_ builtinSymToStr) Run(state *State, args []Value) {
 type builtinNumToStr struct{}
 
 func (_ builtinNumToStr) Run(state *State, args []Value) {
-	arg := takeOne("sym->str", args)
+	arg := takeOne("num->str", args)
 	n := takeNum("number", arg)
 	state.Push(Str{Num{n}.Inspect()})
 }
