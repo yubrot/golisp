@@ -1,10 +1,9 @@
 package main
 
-//go:generate go-bindata lispboot/boot.lisp
+//go:generate go-assets-builder lispboot/boot.lisp -o assets.go
 
 import (
 	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"github.com/yubrot/golisp"
@@ -44,12 +43,12 @@ func main() {
 func initContext(ctx *golisp.Context, boot bool, args []string) {
 	registerBuiltins(ctx, args)
 	if boot {
-		data, err := Asset("lispboot/boot.lisp")
+		r, err := Assets.Open("/lispboot/boot.lisp")
 		if err != nil {
 			panic(err)
 		}
 
-		buf := bufio.NewReader(bytes.NewReader(data))
+		buf := bufio.NewReader(r)
 		err = exec(ctx, buf)
 		if err != nil {
 			panic(errors.New("initContext: " + err.Error()))
