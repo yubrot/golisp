@@ -36,19 +36,19 @@ type Vec struct {
 	Payload []Value
 }
 
-func (_ fun) Inspect() string {
+func (fun) Inspect() string {
 	return "<fun>"
 }
 
-func (_ builtin) Inspect() string {
+func (builtin) Inspect() string {
 	return "<builtin>"
 }
 
-func (_ macro) Inspect() string {
+func (macro) Inspect() string {
 	return "<macro>"
 }
 
-func (_ syntax) Inspect() string {
+func (syntax) Inspect() string {
 	return "<syntax>"
 }
 
@@ -56,8 +56,8 @@ func (vec Vec) Inspect() string {
 	return Cons{Sym{"vec"}, List(vec.Payload...)}.Inspect()
 }
 
-func (_ fun) procValue()     {}
-func (_ builtin) procValue() {}
+func (fun) procValue()     {}
+func (builtin) procValue() {}
 
-func (_ macro) metaValue()  {}
-func (_ syntax) metaValue() {}
+func (macro) metaValue()  {}
+func (syntax) metaValue() {}

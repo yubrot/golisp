@@ -16,13 +16,13 @@ func syntaxEnv() *Env {
 type expandAll struct{}
 type noexpandFirst struct{}
 
-func (_ expandAll) Expand(context *Context, args []Value) {
+func (expandAll) Expand(context *Context, args []Value) {
 	for i, arg := range args {
 		args[i] = context.macroExpand(true, arg)
 	}
 }
 
-func (_ noexpandFirst) Expand(context *Context, args []Value) {
+func (noexpandFirst) Expand(context *Context, args []Value) {
 	for i, arg := range args {
 		if i == 0 {
 			continue
@@ -33,7 +33,7 @@ func (_ noexpandFirst) Expand(context *Context, args []Value) {
 
 type syntaxDef struct{ noexpandFirst }
 
-func (_ syntaxDef) Compile(compileEnv *Env, args []Value) Code {
+func (syntaxDef) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) == 2 {
 		if sym, ok := args[0].(Sym); ok {
 			return append(compile(compileEnv, args[1]), def{sym.Data}, ldc{Nil{}})
@@ -44,7 +44,7 @@ func (_ syntaxDef) Compile(compileEnv *Env, args []Value) Code {
 
 type syntaxSet struct{ noexpandFirst }
 
-func (_ syntaxSet) Compile(compileEnv *Env, args []Value) Code {
+func (syntaxSet) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) == 2 {
 		if sym, ok := args[0].(Sym); ok {
 			return append(compile(compileEnv, args[1]), set{sym.Data}, ldc{Nil{}})
@@ -55,7 +55,7 @@ func (_ syntaxSet) Compile(compileEnv *Env, args []Value) Code {
 
 type syntaxBegin struct{ expandAll }
 
-func (_ syntaxBegin) Compile(compileEnv *Env, args []Value) Code {
+func (syntaxBegin) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) == 0 {
 		return Code{ldc{Nil{}}}
 	}
@@ -70,7 +70,7 @@ func (_ syntaxBegin) Compile(compileEnv *Env, args []Value) Code {
 
 type syntaxIf struct{ expandAll }
 
-func (_ syntaxIf) Compile(compileEnv *Env, args []Value) Code {
+func (syntaxIf) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) == 3 {
 		return append(
 			compile(compileEnv, args[0]),
@@ -85,7 +85,7 @@ func (_ syntaxIf) Compile(compileEnv *Env, args []Value) Code {
 
 type syntaxFun struct{ noexpandFirst }
 
-func (_ syntaxFun) Compile(compileEnv *Env, args []Value) Code {
+func (syntaxFun) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) > 0 {
 		pat := buildPattern(args[0])
 		body := syntaxBegin{}.Compile(compileEnv, args[1:])
@@ -98,7 +98,7 @@ func (_ syntaxFun) Compile(compileEnv *Env, args []Value) Code {
 
 type syntaxMacro struct{ noexpandFirst }
 
-func (_ syntaxMacro) Compile(compileEnv *Env, args []Value) Code {
+func (syntaxMacro) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) > 0 {
 		pat := buildPattern(args[0])
 		body := syntaxBegin{}.Compile(compileEnv, args[1:])
@@ -110,7 +110,7 @@ func (_ syntaxMacro) Compile(compileEnv *Env, args []Value) Code {
 
 type syntaxBuiltin struct{ noexpandFirst }
 
-func (_ syntaxBuiltin) Compile(compileEnv *Env, args []Value) Code {
+func (syntaxBuiltin) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) == 1 {
 		if sym, ok := args[0].(Sym); ok {
 			return Code{ldb{sym.Data}}
@@ -121,7 +121,7 @@ func (_ syntaxBuiltin) Compile(compileEnv *Env, args []Value) Code {
 
 type syntaxQuote struct{ noexpandFirst }
 
-func (_ syntaxQuote) Compile(compileEnv *Env, args []Value) Code {
+func (syntaxQuote) Compile(compileEnv *Env, args []Value) Code {
 	if len(args) == 1 {
 		return Code{ldc{args[0]}}
 	}

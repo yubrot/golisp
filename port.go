@@ -37,7 +37,7 @@ func (pi *portIn) Close() error {
 	return err
 }
 
-func (_ *portIn) Inspect() string {
+func (*portIn) Inspect() string {
 	return "<port>"
 }
 
@@ -69,7 +69,7 @@ func (po *portOut) Close() error {
 	return err
 }
 
-func (_ *portOut) Inspect() string {
+func (*portOut) Inspect() string {
 	return "<port>"
 }
 

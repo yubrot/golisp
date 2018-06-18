@@ -93,7 +93,7 @@ func (cons Cons) Inspect() string {
 	return "(" + cons.inspectInner() + ")"
 }
 
-func (_ Nil) Inspect() string {
+func (Nil) Inspect() string {
 	return "()"
 }
 
@@ -139,5 +139,4 @@ func (cons Cons) inspectInner() (r string) {
 			return
 		}
 	}
-	return
 }

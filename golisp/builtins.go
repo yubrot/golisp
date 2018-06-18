@@ -91,14 +91,14 @@ func registerBuiltins(context *Context, args []string) {
 
 type builtinCons struct{}
 
-func (_ builtinCons) Run(state *State, args []Value) {
+func (builtinCons) Run(state *State, args []Value) {
 	a, b := takeTwo("cons", args)
 	state.Push(Cons{a, b})
 }
 
 type builtinExit struct{}
 
-func (_ builtinExit) Run(state *State, args []Value) {
+func (builtinExit) Run(state *State, args []Value) {
 	if len(args) == 0 {
 		os.Exit(0)
 	}
@@ -112,7 +112,7 @@ func (_ builtinExit) Run(state *State, args []Value) {
 
 type builtinError struct{}
 
-func (_ builtinError) Run(state *State, args []Value) {
+func (builtinError) Run(state *State, args []Value) {
 	if len(args) == 0 {
 		evaluationError("error called")
 	}
@@ -134,7 +134,7 @@ func (gensym *builtinGensym) Run(state *State, args []Value) {
 
 type builtinCar struct{}
 
-func (_ builtinCar) Run(state *State, args []Value) {
+func (builtinCar) Run(state *State, args []Value) {
 	arg := takeOne("car", args)
 	cons := takeCons("cons", arg)
 	state.Push(cons.Car)
@@ -142,7 +142,7 @@ func (_ builtinCar) Run(state *State, args []Value) {
 
 type builtinCdr struct{}
 
-func (_ builtinCdr) Run(state *State, args []Value) {
+func (builtinCdr) Run(state *State, args []Value) {
 	arg := takeOne("cdr", args)
 	cons := takeCons("cons", arg)
 	state.Push(cons.Cdr)
@@ -150,7 +150,7 @@ func (_ builtinCdr) Run(state *State, args []Value) {
 
 type builtinApply struct{}
 
-func (_ builtinApply) Run(state *State, args []Value) {
+func (builtinApply) Run(state *State, args []Value) {
 	f, fargs := takeTwo("apply", args)
 	fslice := takeList("argument list", fargs)
 	state.Apply(f, fslice...)
@@ -253,33 +253,33 @@ type arithmeticImpl interface {
 
 type add struct{}
 
-func (_ add) zero() (float64, bool)     { return 0, true }
-func (_ add) one(num float64) float64   { return num }
-func (_ add) fold(l, r float64) float64 { return l + r }
+func (add) zero() (float64, bool)     { return 0, true }
+func (add) one(num float64) float64   { return num }
+func (add) fold(l, r float64) float64 { return l + r }
 
 type sub struct{}
 
-func (_ sub) zero() (float64, bool)     { return 0, false }
-func (_ sub) one(num float64) float64   { return -num }
-func (_ sub) fold(l, r float64) float64 { return l - r }
+func (sub) zero() (float64, bool)     { return 0, false }
+func (sub) one(num float64) float64   { return -num }
+func (sub) fold(l, r float64) float64 { return l - r }
 
 type mul struct{}
 
-func (_ mul) zero() (float64, bool)     { return 1, true }
-func (_ mul) one(num float64) float64   { return num }
-func (_ mul) fold(l, r float64) float64 { return l * r }
+func (mul) zero() (float64, bool)     { return 1, true }
+func (mul) one(num float64) float64   { return num }
+func (mul) fold(l, r float64) float64 { return l * r }
 
 type div struct{}
 
-func (_ div) zero() (float64, bool)     { return 0, false }
-func (_ div) one(num float64) float64   { return 1 / num }
-func (_ div) fold(l, r float64) float64 { return l / r }
+func (div) zero() (float64, bool)     { return 0, false }
+func (div) one(num float64) float64   { return 1 / num }
+func (div) fold(l, r float64) float64 { return l / r }
 
 type mod struct{}
 
-func (_ mod) zero() (float64, bool)     { return 0, false }
-func (_ mod) one(num float64) float64   { return num }
-func (_ mod) fold(l, r float64) float64 { return math.Mod(l, r) }
+func (mod) zero() (float64, bool)     { return 0, false }
+func (mod) one(num float64) float64   { return num }
+func (mod) fold(l, r float64) float64 { return math.Mod(l, r) }
 
 type builtinEq struct{}
 
@@ -396,7 +396,7 @@ func ge(compareResult int) bool { return compareResult != -1 }
 
 type builtinCallCC struct{}
 
-func (_ builtinCallCC) Run(state *State, args []Value) {
+func (builtinCallCC) Run(state *State, args []Value) {
 	f := takeOne("call/cc", args)
 	cont := state.CaptureCont()
 	state.Apply(f, cont)
@@ -404,7 +404,7 @@ func (_ builtinCallCC) Run(state *State, args []Value) {
 
 type builtinNever struct{}
 
-func (_ builtinNever) Run(state *State, args []Value) {
+func (builtinNever) Run(state *State, args []Value) {
 	if len(args) > 0 {
 		state.ApplyNever(args[0], args[1:]...)
 		return
@@ -414,7 +414,7 @@ func (_ builtinNever) Run(state *State, args []Value) {
 
 type builtinStr struct{}
 
-func (_ builtinStr) Run(state *State, args []Value) {
+func (builtinStr) Run(state *State, args []Value) {
 	var bytes []byte
 	for _, arg := range args {
 		num := int(takeNum("byte", arg))
@@ -428,7 +428,7 @@ func (_ builtinStr) Run(state *State, args []Value) {
 
 type builtinStrRef struct{}
 
-func (_ builtinStrRef) Run(state *State, args []Value) {
+func (builtinStrRef) Run(state *State, args []Value) {
 	str, index := takeTwo("str-ref", args)
 	s := takeStr("string", str)
 	i := int(takeNum("index", index))
@@ -441,7 +441,7 @@ func (_ builtinStrRef) Run(state *State, args []Value) {
 
 type builtinStrBytesize struct{}
 
-func (_ builtinStrBytesize) Run(state *State, args []Value) {
+func (builtinStrBytesize) Run(state *State, args []Value) {
 	arg := takeOne("str-bytesize", args)
 	str := takeStr("string", arg)
 	state.Push(Num{float64(len(str))})
@@ -449,7 +449,7 @@ func (_ builtinStrBytesize) Run(state *State, args []Value) {
 
 type builtinStrConcat struct{}
 
-func (_ builtinStrConcat) Run(state *State, args []Value) {
+func (builtinStrConcat) Run(state *State, args []Value) {
 	var buf bytes.Buffer
 	for _, arg := range args {
 		buf.WriteString(takeStr("string", arg))
@@ -459,7 +459,7 @@ func (_ builtinStrConcat) Run(state *State, args []Value) {
 
 type builtinSubstr struct{}
 
-func (_ builtinSubstr) Run(state *State, args []Value) {
+func (builtinSubstr) Run(state *State, args []Value) {
 	s, i, l := takeThree("substr", args)
 	str := takeStr("string", s)
 	index := int(takeNum("index", i))
@@ -472,7 +472,7 @@ func (_ builtinSubstr) Run(state *State, args []Value) {
 
 type builtinSymToStr struct{}
 
-func (_ builtinSymToStr) Run(state *State, args []Value) {
+func (builtinSymToStr) Run(state *State, args []Value) {
 	arg := takeOne("sym->str", args)
 	s := takeSym("symbol", arg)
 	state.Push(Str{s})
@@ -480,7 +480,7 @@ func (_ builtinSymToStr) Run(state *State, args []Value) {
 
 type builtinNumToStr struct{}
 
-func (_ builtinNumToStr) Run(state *State, args []Value) {
+func (builtinNumToStr) Run(state *State, args []Value) {
 	arg := takeOne("num->str", args)
 	n := takeNum("number", arg)
 	state.Push(Str{Num{n}.Inspect()})
@@ -488,7 +488,7 @@ func (_ builtinNumToStr) Run(state *State, args []Value) {
 
 type builtinStrToNum struct{}
 
-func (_ builtinStrToNum) Run(state *State, args []Value) {
+func (builtinStrToNum) Run(state *State, args []Value) {
 	arg := takeOne("str->num", args)
 	s := takeStr("string", arg)
 	num, err := strconv.ParseFloat(s, 64)
@@ -501,13 +501,13 @@ func (_ builtinStrToNum) Run(state *State, args []Value) {
 
 type builtinVec struct{}
 
-func (_ builtinVec) Run(state *State, args []Value) {
+func (builtinVec) Run(state *State, args []Value) {
 	state.Push(Vec{args})
 }
 
 type builtinVecMake struct{}
 
-func (_ builtinVecMake) Run(state *State, args []Value) {
+func (builtinVecMake) Run(state *State, args []Value) {
 	l, init := takeTwo("vec-make", args)
 	length := int(takeNum("length", l))
 	slice := make([]Value, length)
@@ -519,7 +519,7 @@ func (_ builtinVecMake) Run(state *State, args []Value) {
 
 type builtinVecRef struct{}
 
-func (_ builtinVecRef) Run(state *State, args []Value) {
+func (builtinVecRef) Run(state *State, args []Value) {
 	v, n := takeTwo("vec-ref", args)
 	vec := takeVec("vector", v)
 	index := int(takeNum("index", n))
@@ -532,7 +532,7 @@ func (_ builtinVecRef) Run(state *State, args []Value) {
 
 type builtinVecLength struct{}
 
-func (_ builtinVecLength) Run(state *State, args []Value) {
+func (builtinVecLength) Run(state *State, args []Value) {
 	v := takeOne("vec-length", args)
 	vec := takeVec("vector", v)
 	state.Push(Num{float64(len(vec.Payload))})
@@ -540,7 +540,7 @@ func (_ builtinVecLength) Run(state *State, args []Value) {
 
 type builtinVecSet struct{}
 
-func (_ builtinVecSet) Run(state *State, args []Value) {
+func (builtinVecSet) Run(state *State, args []Value) {
 	v, n, item := takeThree("vec-set!", args)
 	vec := takeVec("vector", v)
 	index := int(takeNum("index", n))
@@ -554,7 +554,7 @@ func (_ builtinVecSet) Run(state *State, args []Value) {
 
 type builtinVecCopy struct{}
 
-func (_ builtinVecCopy) Run(state *State, args []Value) {
+func (builtinVecCopy) Run(state *State, args []Value) {
 	dest, destS, src, srcS, l := takeFive("vec-copy!", args)
 	destVec := takeVec("destination vector", dest)
 	destStart := int(takeNum("destination index", destS))
@@ -572,7 +572,7 @@ func (_ builtinVecCopy) Run(state *State, args []Value) {
 
 type builtinOpen struct{}
 
-func (_ builtinOpen) Run(state *State, args []Value) {
+func (builtinOpen) Run(state *State, args []Value) {
 	p, m := takeTwo("open", args)
 	filepath := takeStr("filepath", p)
 	mode := takeStr("mode", m)
@@ -599,7 +599,7 @@ func (_ builtinOpen) Run(state *State, args []Value) {
 
 type builtinClose struct{}
 
-func (_ builtinClose) Run(state *State, args []Value) {
+func (builtinClose) Run(state *State, args []Value) {
 	p := takeOne("close", args)
 	port := takePort("port", p)
 	err := port.Close()
@@ -631,7 +631,7 @@ func eofOrError(err error) Value {
 
 type builtinReadByte struct{}
 
-func (_ builtinReadByte) Run(state *State, args []Value) {
+func (builtinReadByte) Run(state *State, args []Value) {
 	p := takeOne("read-byte", args)
 	r := takePortIn(takePort("port", p))
 
@@ -645,7 +645,7 @@ func (_ builtinReadByte) Run(state *State, args []Value) {
 
 type builtinReadStr struct{}
 
-func (_ builtinReadStr) Run(state *State, args []Value) {
+func (builtinReadStr) Run(state *State, args []Value) {
 	s, p := takeTwo("read-str", args)
 	size := int(takeNum("size", s))
 	r := takePortIn(takePort("port", p))
@@ -661,7 +661,7 @@ func (_ builtinReadStr) Run(state *State, args []Value) {
 
 type builtinReadLine struct{}
 
-func (_ builtinReadLine) Run(state *State, args []Value) {
+func (builtinReadLine) Run(state *State, args []Value) {
 	p := takeOne("read-line", args)
 	r := takePortIn(takePort("port", p))
 
@@ -675,7 +675,7 @@ func (_ builtinReadLine) Run(state *State, args []Value) {
 
 type builtinWriteByte struct{}
 
-func (_ builtinWriteByte) Run(state *State, args []Value) {
+func (builtinWriteByte) Run(state *State, args []Value) {
 	b, p := takeTwo("write-byte", args)
 	w := takePortOut(takePort("port", p))
 	err := w.WriteByte(byte(takeNum("byte", b)))
@@ -688,7 +688,7 @@ func (_ builtinWriteByte) Run(state *State, args []Value) {
 
 type builtinWriteStr struct{}
 
-func (_ builtinWriteStr) Run(state *State, args []Value) {
+func (builtinWriteStr) Run(state *State, args []Value) {
 	s, p := takeTwo("write-str", args)
 	w := takePortOut(takePort("port", p))
 	str := takeStr("string", s)
@@ -702,7 +702,7 @@ func (_ builtinWriteStr) Run(state *State, args []Value) {
 
 type builtinWriteLine struct{}
 
-func (_ builtinWriteLine) Run(state *State, args []Value) {
+func (builtinWriteLine) Run(state *State, args []Value) {
 	s, p := takeTwo("write-line", args)
 	w := takePortOut(takePort("port", p))
 	str := takeStr("string", s)
@@ -710,7 +710,7 @@ func (_ builtinWriteLine) Run(state *State, args []Value) {
 	if n == len(str) {
 		err = w.WriteByte('\n')
 		if err == nil {
-			n += 1
+			n++
 			err = w.Flush()
 		}
 	}
@@ -723,7 +723,7 @@ func (_ builtinWriteLine) Run(state *State, args []Value) {
 
 type builtinFlush struct{}
 
-func (_ builtinFlush) Run(state *State, args []Value) {
+func (builtinFlush) Run(state *State, args []Value) {
 	p := takeOne("flush", args)
 	w := takePortOut(takePort("port", p))
 	err := w.Flush()
@@ -749,7 +749,7 @@ func (b builtinArgs) Run(state *State, args []Value) {
 
 type builtinEval struct{}
 
-func (_ builtinEval) Run(state *State, args []Value) {
+func (builtinEval) Run(state *State, args []Value) {
 	if len(args) == 1 {
 		ret, err := state.Context.Eval(args[0])
 		if err == nil {

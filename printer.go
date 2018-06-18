@@ -27,7 +27,7 @@ func (printer *codePrinter) print() string {
 func (printer *codePrinter) putBlock(header string, code Code) string {
 	id := "[" + strconv.Itoa(printer.id) + " " + header + "]"
 	block := &bytes.Buffer{}
-	printer.id += 1
+	printer.id++
 	printer.blocks = append(printer.blocks, block)
 
 	block.WriteString(id + "\n")
