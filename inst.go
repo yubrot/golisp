@@ -1,6 +1,6 @@
 package golisp
 
-type Code []inst
+type Code = []inst
 
 type inst interface{}
 

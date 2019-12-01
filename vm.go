@@ -287,7 +287,6 @@ func recoverContext(err *error) {
 			*err = InternalError{fmt.Sprintf("panic: %v", r)}
 		}
 	}
-	return
 }
 
 func NewContext() *Context {

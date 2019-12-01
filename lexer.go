@@ -239,7 +239,7 @@ func (l *lexer) unread(c rune) {
 	if c == eof {
 		return
 	}
-	l.reader.UnreadRune()
+	_ = l.reader.UnreadRune()
 	l.current = l.current[:len(l.current)-1]
 }
 
@@ -277,7 +277,7 @@ func (l *lexer) fail(msg string) token {
 
 func isSpecial(c rune) bool {
 	switch c {
-	case '!', '$', '%', '&', '*', '+', '-', '.', '/',
+	case '!', '$', '%', '&', '*', '+', '-', '/',
 		':', '<', '=', '>', '?', '@', '^', '_', '~':
 		return true
 	default:

@@ -5,10 +5,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/yubrot/golisp"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/yubrot/golisp"
 )
 
 type testcase struct {
@@ -103,8 +104,7 @@ type commandImpl interface {
 
 func parseLine(input string) (result golisp.Value, err error) {
 	buf := bufio.NewReader(strings.NewReader(input))
-	err = errors.New("empty")
-	golisp.RunParser(buf, func(expr golisp.Value, e error) error {
+	_ = golisp.RunParser(buf, func(expr golisp.Value, e error) error {
 		result = expr
 		err = e
 		return errors.New("dummy")

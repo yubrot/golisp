@@ -92,12 +92,12 @@ func repl(context *golisp.Context) {
 	fmt.Fprint(os.Stderr, "> ")
 
 	stdin := bufio.NewReader(os.Stdin)
-	golisp.RunParser(stdin, func(expr golisp.Value, err error) (never error) {
+	_ = golisp.RunParser(stdin, func(expr golisp.Value, err error) (never error) {
 		defer fmt.Fprint(os.Stderr, "> ")
 
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
-			stdin.ReadLine()
+			_, _, _ = stdin.ReadLine()
 			return
 		}
 
