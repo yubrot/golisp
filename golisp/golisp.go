@@ -1,13 +1,16 @@
 package main
 
-//go:generate go-assets-builder lispboot/boot.lisp -o assets.go
+//go:generate go run -mod vendor github.com/rakyll/statik -include=boot.lisp -src=lispboot -f
 
 import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/yubrot/golisp"
 	"os"
+
+	"github.com/rakyll/statik/fs"
+	"github.com/yubrot/golisp"
+	_ "github.com/yubrot/golisp/golisp/statik"
 )
 
 func main() {
@@ -43,7 +46,12 @@ func main() {
 func initContext(ctx *golisp.Context, boot bool, args []string) {
 	registerBuiltins(ctx, args)
 	if boot {
-		r, err := Assets.Open("/lispboot/boot.lisp")
+		statikFS, err := fs.New()
+		if err != nil {
+			panic(err)
+		}
+
+		r, err := statikFS.Open("/boot.lisp")
 		if err != nil {
 			panic(err)
 		}

@@ -1,6 +1,6 @@
 package golisp
 
-//go:generate goyacc -o parser.go parser.go.y
+//go:generate go run -mod vendor golang.org/x/tools/cmd/goyacc -o parser.go parser.go.y
 
 import (
 	"bufio"
