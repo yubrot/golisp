@@ -1,6 +1,6 @@
 package main
 
-//go:generate go run -mod vendor github.com/rakyll/statik -include=boot.lisp -src=lispboot -f
+//go:generate go run -mod vendor github.com/rakyll/statik -include=boot.lisp -src=rosetta-lisp -f
 
 import (
 	"bufio"

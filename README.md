@@ -1,7 +1,7 @@
 golisp
 ======
 
-golisp is a Go version of [ocalisp](https://github.com/yubrot/ocalisp), a tiny Lisp-1 implementation.
+golisp is a Go version of [Rosetta Lisp](https://github.com/yubrot/rosetta-lisp) implementation.
 
     # install
     go get github.com/yubrot/golisp/golisp
