@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io"
 	"math"
 	"os"
 	"strconv"
@@ -33,7 +32,6 @@ func registerBuiltins(context *Context, args []string) {
 	context.Builtins["bool?"] = builtinTest{"bool?", isBool}
 	context.Builtins["proc?"] = builtinTest{"proc?", isProc}
 	context.Builtins["meta?"] = builtinTest{"meta?", isMeta}
-	context.Builtins["port?"] = builtinTest{"port?", isPort}
 	context.Builtins["vec?"] = builtinTest{"vec?", isVec}
 
 	context.Builtins["+"] = builtinArithmetic{"+", add{}}
@@ -52,8 +50,8 @@ func registerBuiltins(context *Context, args []string) {
 	context.Builtins["never"] = builtinNever{}
 
 	context.Builtins["str"] = builtinStr{}
-	context.Builtins["str-ref"] = builtinStrRef{}
-	context.Builtins["str-bytesize"] = builtinStrBytesize{}
+	context.Builtins["str-char-at"] = builtinStrCharAt{}
+	context.Builtins["str-length"] = builtinStrLength{}
 	context.Builtins["str-concat"] = builtinStrConcat{}
 	context.Builtins["substr"] = builtinSubstr{}
 	context.Builtins["sym->str"] = builtinSymToStr{}
@@ -62,26 +60,15 @@ func registerBuiltins(context *Context, args []string) {
 
 	context.Builtins["vec"] = builtinVec{}
 	context.Builtins["vec-make"] = builtinVecMake{}
-	context.Builtins["vec-ref"] = builtinVecRef{}
 	context.Builtins["vec-length"] = builtinVecLength{}
+	context.Builtins["vec-get"] = builtinVecGet{}
 	context.Builtins["vec-set!"] = builtinVecSet{}
 	context.Builtins["vec-copy!"] = builtinVecCopy{}
 
-	context.Builtins["open"] = builtinOpen{}
-	context.Builtins["close"] = builtinClose{}
-
-	context.Builtins["stdin"] = builtinPort{"stdin", NewPortIn(os.Stdin)}
-	context.Builtins["stdout"] = builtinPort{"stdout", NewPortOut(os.Stdout)}
-	context.Builtins["stderr"] = builtinPort{"stderr", NewPortOut(os.Stderr)}
-
-	context.Builtins["read-byte"] = builtinReadByte{}
-	context.Builtins["read-str"] = builtinReadStr{}
-	context.Builtins["read-line"] = builtinReadLine{}
-
-	context.Builtins["write-byte"] = builtinWriteByte{}
-	context.Builtins["write-str"] = builtinWriteStr{}
-	context.Builtins["write-line"] = builtinWriteLine{}
-	context.Builtins["flush"] = builtinFlush{}
+	context.Builtins["read-file-text"] = builtinReadFileText{}
+	context.Builtins["write-file-text"] = builtinWriteFileText{}
+	context.Builtins["read-console-line"] = builtinReadConsoleLine{}
+	context.Builtins["write-console"] = builtinWriteConsole{}
 
 	context.Builtins["args"] = builtinArgs{args}
 
@@ -204,11 +191,6 @@ func isProc(value Value) bool {
 
 func isMeta(value Value) bool {
 	_, ok := value.(Meta)
-	return ok
-}
-
-func isPort(value Value) bool {
-	_, ok := value.(Port)
 	return ok
 }
 
@@ -427,10 +409,10 @@ func (builtinStr) Run(state *State, args []Value) {
 	state.Push(Str{Data: string(bytes[:])})
 }
 
-type builtinStrRef struct{}
+type builtinStrCharAt struct{}
 
-func (builtinStrRef) Run(state *State, args []Value) {
-	str, index := takeTwo("str-ref", args)
+func (builtinStrCharAt) Run(state *State, args []Value) {
+	str, index := takeTwo("str-char-at", args)
 	s := takeStr("string", str)
 	i := int(takeNum("index", index))
 	if i < 0 || len(s) <= i {
@@ -440,10 +422,10 @@ func (builtinStrRef) Run(state *State, args []Value) {
 	}
 }
 
-type builtinStrBytesize struct{}
+type builtinStrLength struct{}
 
-func (builtinStrBytesize) Run(state *State, args []Value) {
-	arg := takeOne("str-bytesize", args)
+func (builtinStrLength) Run(state *State, args []Value) {
+	arg := takeOne("str-length", args)
 	str := takeStr("string", arg)
 	state.Push(Num{Data: float64(len(str))})
 }
@@ -518,10 +500,18 @@ func (builtinVecMake) Run(state *State, args []Value) {
 	state.Push(Vec{Payload: slice})
 }
 
-type builtinVecRef struct{}
+type builtinVecLength struct{}
 
-func (builtinVecRef) Run(state *State, args []Value) {
-	v, n := takeTwo("vec-ref", args)
+func (builtinVecLength) Run(state *State, args []Value) {
+	v := takeOne("vec-length", args)
+	vec := takeVec("vector", v)
+	state.Push(Num{Data: float64(len(vec.Payload))})
+}
+
+type builtinVecGet struct{}
+
+func (builtinVecGet) Run(state *State, args []Value) {
+	v, n := takeTwo("vec-get", args)
 	vec := takeVec("vector", v)
 	index := int(takeNum("index", n))
 	if index < 0 || len(vec.Payload) <= index {
@@ -529,14 +519,6 @@ func (builtinVecRef) Run(state *State, args []Value) {
 	} else {
 		state.Push(vec.Payload[index])
 	}
-}
-
-type builtinVecLength struct{}
-
-func (builtinVecLength) Run(state *State, args []Value) {
-	v := takeOne("vec-length", args)
-	vec := takeVec("vector", v)
-	state.Push(Num{Data: float64(len(vec.Payload))})
 }
 
 type builtinVecSet struct{}
@@ -571,40 +553,26 @@ func (builtinVecCopy) Run(state *State, args []Value) {
 	}
 }
 
-type builtinOpen struct{}
+type builtinReadFileText struct{}
 
-func (builtinOpen) Run(state *State, args []Value) {
-	p, m := takeTwo("open", args)
+func (builtinReadFileText) Run(state *State, args []Value) {
+	p := takeOne("read-file-text", args)
 	filepath := takeStr("filepath", p)
-	mode := takeStr("mode", m)
-
-	switch mode {
-	case "r":
-		file, err := os.Open(filepath)
-		if err == nil {
-			state.Push(Cons{Car: Bool{Data: true}, Cdr: NewPortIn(file)})
-		} else {
-			state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
-		}
-	case "w":
-		file, err := os.Create(filepath)
-		if err == nil {
-			state.Push(Cons{Car: Bool{Data: true}, Cdr: NewPortOut(file)})
-		} else {
-			state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
-		}
-	default:
-		evaluationError("Unsupported mode for open: " + mode)
+	contents, err := os.ReadFile(filepath)
+	if err == nil {
+		state.Push(Cons{Car: Bool{Data: true}, Cdr: Str{Data: string(contents)}})
+	} else {
+		state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
 	}
 }
 
-type builtinClose struct{}
+type builtinWriteFileText struct{}
 
-func (builtinClose) Run(state *State, args []Value) {
-	p := takeOne("close", args)
-	port := takePort("port", p)
-	err := port.Close()
-
+func (builtinWriteFileText) Run(state *State, args []Value) {
+	p, c := takeTwo("write-file-text", args)
+	filepath := takeStr("filepath", p)
+	contents := takeStr("contents", c)
+	err := os.WriteFile(filepath, []byte(contents), 0666)
 	if err == nil {
 		state.Push(Cons{Car: Bool{Data: true}, Cdr: Nil{}})
 	} else {
@@ -612,122 +580,27 @@ func (builtinClose) Run(state *State, args []Value) {
 	}
 }
 
-type builtinPort struct {
-	name string
-	port Port
-}
+type builtinReadConsoleLine struct{}
 
-func (bp builtinPort) Run(state *State, args []Value) {
-	takeNone(bp.name, args)
-	state.Push(bp.port)
-}
+func (builtinReadConsoleLine) Run(state *State, args []Value) {
+	takeNone("read-console-line", args)
 
-func eofOrError(err error) Value {
-	if err == io.EOF {
-		return Cons{Car: Bool{Data: true}, Cdr: Sym{Data: "eof"}}
+	scanner := bufio.NewScanner(os.Stdin)
+	if scanner.Scan() {
+		state.Push(Cons{Car: Bool{Data: true}, Cdr: Str{Data: string(scanner.Text())}})
+	} else if scanner.Err() == nil {
+		state.Push(Cons{Car: Bool{Data: true}, Cdr: Nil{}})
 	} else {
-		return Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}}
+		state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: scanner.Err().Error()}})
 	}
 }
 
-type builtinReadByte struct{}
+type builtinWriteConsole struct{}
 
-func (builtinReadByte) Run(state *State, args []Value) {
-	p := takeOne("read-byte", args)
-	r := takePortIn(takePort("port", p))
-
-	b, err := r.ReadByte()
-	if err == nil {
-		state.Push(Cons{Car: Bool{Data: true}, Cdr: Num{Data: float64(b)}})
-	} else {
-		state.Push(eofOrError(err))
-	}
-}
-
-type builtinReadStr struct{}
-
-func (builtinReadStr) Run(state *State, args []Value) {
-	s, p := takeTwo("read-str", args)
-	size := int(takeNum("size", s))
-	r := takePortIn(takePort("port", p))
-
-	bytes := make([]byte, size)
-	n, err := r.Read(bytes)
-	if err == nil {
-		state.Push(Cons{Car: Bool{Data: true}, Cdr: Str{Data: string(bytes[:n])}})
-	} else {
-		state.Push(eofOrError(err))
-	}
-}
-
-type builtinReadLine struct{}
-
-func (builtinReadLine) Run(state *State, args []Value) {
-	p := takeOne("read-line", args)
-	r := takePortIn(takePort("port", p))
-
-	line, err := r.ReadBytes('\n')
-	if err == nil {
-		state.Push(Cons{Car: Bool{Data: true}, Cdr: Str{Data: string(line[:len(line)-1])}})
-	} else {
-		state.Push(eofOrError(err))
-	}
-}
-
-type builtinWriteByte struct{}
-
-func (builtinWriteByte) Run(state *State, args []Value) {
-	b, p := takeTwo("write-byte", args)
-	w := takePortOut(takePort("port", p))
-	err := w.WriteByte(byte(takeNum("byte", b)))
-	if err == nil {
-		state.Push(Cons{Car: Bool{Data: true}, Cdr: Num{Data: 1}})
-	} else {
-		state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
-	}
-}
-
-type builtinWriteStr struct{}
-
-func (builtinWriteStr) Run(state *State, args []Value) {
-	s, p := takeTwo("write-str", args)
-	w := takePortOut(takePort("port", p))
-	str := takeStr("string", s)
-	n, err := w.WriteString(str)
-	if err == nil || n > 0 {
-		state.Push(Cons{Car: Bool{Data: true}, Cdr: Num{Data: float64(n)}})
-	} else {
-		state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
-	}
-}
-
-type builtinWriteLine struct{}
-
-func (builtinWriteLine) Run(state *State, args []Value) {
-	s, p := takeTwo("write-line", args)
-	w := takePortOut(takePort("port", p))
-	str := takeStr("string", s)
-	n, err := w.WriteString(str)
-	if n == len(str) {
-		err = w.WriteByte('\n')
-		if err == nil {
-			n++
-			err = w.Flush()
-		}
-	}
-	if err == nil || n > 0 {
-		state.Push(Cons{Car: Bool{Data: true}, Cdr: Num{Data: float64(n)}})
-	} else {
-		state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
-	}
-}
-
-type builtinFlush struct{}
-
-func (builtinFlush) Run(state *State, args []Value) {
-	p := takeOne("flush", args)
-	w := takePortOut(takePort("port", p))
-	err := w.Flush()
+func (builtinWriteConsole) Run(state *State, args []Value) {
+	s := takeOne("write-console", args)
+	text := takeStr("text", s)
+	_, err := fmt.Print(text)
 	if err == nil {
 		state.Push(Cons{Car: Bool{Data: true}, Cdr: Nil{}})
 	} else {
@@ -843,28 +716,6 @@ func takeList(name string, v Value) []Value {
 	ret, ok := Slice(v)
 	checkExpected(name, ok, v)
 	return ret
-}
-
-func takePort(name string, v Value) Port {
-	ret, ok := v.(Port)
-	checkExpected(name, ok, v)
-	return ret
-}
-
-func takePortIn(p Port) *bufio.Reader {
-	reader := p.Reader()
-	if reader == nil {
-		evaluationError("port is not available for reading")
-	}
-	return reader
-}
-
-func takePortOut(p Port) *bufio.Writer {
-	writer := p.Writer()
-	if writer == nil {
-		evaluationError("port is not available for writing")
-	}
-	return writer
 }
 
 func takeVec(name string, v Value) Vec {
