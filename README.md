@@ -1,13 +1,14 @@
-golisp
-======
+# golisp
 
-golisp is a Go version of [Rosetta Lisp](https://github.com/yubrot/rosetta-lisp) implementation.
+golisp is a Go version of [Rosetta Lisp](https://github.com/yubrot/rosetta-lisp)
+implementation.
 
-    # install
-    go get github.com/yubrot/golisp/golisp
+```bash
+# install
+$ go get github.com/yubrot/golisp/golisp
 
-    # build
-    go mod vendor
-    go generate
-    go build
-
+# build
+$ go mod vendor
+$ go generate
+$ cd golisp && go build
+```

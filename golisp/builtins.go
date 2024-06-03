@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	. "github.com/yubrot/golisp"
 	"io"
 	"math"
 	"os"
 	"strconv"
+
+	. "github.com/yubrot/golisp"
 )
 
 func registerBuiltins(context *Context, args []string) {
@@ -93,7 +94,7 @@ type builtinCons struct{}
 
 func (builtinCons) Run(state *State, args []Value) {
 	a, b := takeTwo("cons", args)
-	state.Push(Cons{a, b})
+	state.Push(Cons{Car: a, Cdr: b})
 }
 
 type builtinExit struct{}
@@ -129,7 +130,7 @@ type builtinGensym struct {
 func (gensym *builtinGensym) Run(state *State, args []Value) {
 	takeNone("gensym", args)
 	gensym.id++
-	state.Push(Sym{fmt.Sprintf("#sym.%v", gensym.id)})
+	state.Push(Sym{Data: fmt.Sprintf("#sym.%v", gensym.id)})
 }
 
 type builtinCar struct{}
@@ -163,7 +164,7 @@ type builtinTest struct {
 
 func (test builtinTest) Run(state *State, args []Value) {
 	arg := takeOne(test.name, args)
-	state.Push(Bool{test.cond(arg)})
+	state.Push(Bool{Data: test.cond(arg)})
 }
 
 func isNum(value Value) bool {
@@ -242,7 +243,7 @@ func (arith builtinArithmetic) Run(state *State, args []Value) {
 			result = arith.fold(result, num)
 		}
 	}
-	state.Push(Num{result})
+	state.Push(Num{Data: result})
 }
 
 type arithmeticImpl interface {
@@ -287,12 +288,12 @@ func (eq builtinEq) Run(state *State, args []Value) {
 	if len(args) >= 1 {
 		for _, arg := range args[1:] {
 			if !eq.test(args[0], arg) {
-				state.Push(Bool{false})
+				state.Push(Bool{Data: false})
 				return
 			}
 		}
 	}
-	state.Push(Bool{true})
+	state.Push(Bool{Data: true})
 }
 
 func (eq builtinEq) test(a, b Value) bool {
@@ -342,7 +343,7 @@ func (compare builtinCompare) Run(state *State, args []Value) {
 			}
 			for _, r := range nums {
 				if !compare.compareNumbers(l, r) {
-					state.Push(Bool{false})
+					state.Push(Bool{Data: false})
 					return
 				}
 				l = r
@@ -356,7 +357,7 @@ func (compare builtinCompare) Run(state *State, args []Value) {
 			}
 			for _, r := range strs {
 				if !compare.compareStrings(l, r) {
-					state.Push(Bool{false})
+					state.Push(Bool{Data: false})
 					return
 				}
 				l = r
@@ -366,7 +367,7 @@ func (compare builtinCompare) Run(state *State, args []Value) {
 			evaluationError(compare.name + " is only defined for strings or numbers")
 		}
 	}
-	state.Push(Bool{true})
+	state.Push(Bool{Data: true})
 }
 
 func (compare builtinCompare) compareNumbers(l, r float64) bool {
@@ -423,7 +424,7 @@ func (builtinStr) Run(state *State, args []Value) {
 		}
 		bytes = append(bytes, byte(num))
 	}
-	state.Push(Str{string(bytes[:])})
+	state.Push(Str{Data: string(bytes[:])})
 }
 
 type builtinStrRef struct{}
@@ -435,7 +436,7 @@ func (builtinStrRef) Run(state *State, args []Value) {
 	if i < 0 || len(s) <= i {
 		state.Push(Nil{})
 	} else {
-		state.Push(Num{float64(s[i])})
+		state.Push(Num{Data: float64(s[i])})
 	}
 }
 
@@ -444,7 +445,7 @@ type builtinStrBytesize struct{}
 func (builtinStrBytesize) Run(state *State, args []Value) {
 	arg := takeOne("str-bytesize", args)
 	str := takeStr("string", arg)
-	state.Push(Num{float64(len(str))})
+	state.Push(Num{Data: float64(len(str))})
 }
 
 type builtinStrConcat struct{}
@@ -454,7 +455,7 @@ func (builtinStrConcat) Run(state *State, args []Value) {
 	for _, arg := range args {
 		buf.WriteString(takeStr("string", arg))
 	}
-	state.Push(Str{buf.String()})
+	state.Push(Str{Data: buf.String()})
 }
 
 type builtinSubstr struct{}
@@ -467,7 +468,7 @@ func (builtinSubstr) Run(state *State, args []Value) {
 	if index < 0 || len(str) < index+size {
 		evaluationError("Index out of range")
 	}
-	state.Push(Str{str[index : index+size]})
+	state.Push(Str{Data: str[index : index+size]})
 }
 
 type builtinSymToStr struct{}
@@ -475,7 +476,7 @@ type builtinSymToStr struct{}
 func (builtinSymToStr) Run(state *State, args []Value) {
 	arg := takeOne("sym->str", args)
 	s := takeSym("symbol", arg)
-	state.Push(Str{s})
+	state.Push(Str{Data: s})
 }
 
 type builtinNumToStr struct{}
@@ -483,7 +484,7 @@ type builtinNumToStr struct{}
 func (builtinNumToStr) Run(state *State, args []Value) {
 	arg := takeOne("num->str", args)
 	n := takeNum("number", arg)
-	state.Push(Str{Num{n}.Inspect()})
+	state.Push(Str{Data: Num{Data: n}.Inspect()})
 }
 
 type builtinStrToNum struct{}
@@ -495,14 +496,14 @@ func (builtinStrToNum) Run(state *State, args []Value) {
 	if err != nil {
 		state.Push(Nil{})
 	} else {
-		state.Push(Num{num})
+		state.Push(Num{Data: num})
 	}
 }
 
 type builtinVec struct{}
 
 func (builtinVec) Run(state *State, args []Value) {
-	state.Push(Vec{args})
+	state.Push(Vec{Payload: args})
 }
 
 type builtinVecMake struct{}
@@ -514,7 +515,7 @@ func (builtinVecMake) Run(state *State, args []Value) {
 	for i := range slice {
 		slice[i] = init
 	}
-	state.Push(Vec{slice})
+	state.Push(Vec{Payload: slice})
 }
 
 type builtinVecRef struct{}
@@ -535,7 +536,7 @@ type builtinVecLength struct{}
 func (builtinVecLength) Run(state *State, args []Value) {
 	v := takeOne("vec-length", args)
 	vec := takeVec("vector", v)
-	state.Push(Num{float64(len(vec.Payload))})
+	state.Push(Num{Data: float64(len(vec.Payload))})
 }
 
 type builtinVecSet struct{}
@@ -581,16 +582,16 @@ func (builtinOpen) Run(state *State, args []Value) {
 	case "r":
 		file, err := os.Open(filepath)
 		if err == nil {
-			state.Push(Cons{Bool{true}, NewPortIn(file)})
+			state.Push(Cons{Car: Bool{Data: true}, Cdr: NewPortIn(file)})
 		} else {
-			state.Push(Cons{Bool{false}, Str{err.Error()}})
+			state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
 		}
 	case "w":
 		file, err := os.Create(filepath)
 		if err == nil {
-			state.Push(Cons{Bool{true}, NewPortOut(file)})
+			state.Push(Cons{Car: Bool{Data: true}, Cdr: NewPortOut(file)})
 		} else {
-			state.Push(Cons{Bool{false}, Str{err.Error()}})
+			state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
 		}
 	default:
 		evaluationError("Unsupported mode for open: " + mode)
@@ -605,9 +606,9 @@ func (builtinClose) Run(state *State, args []Value) {
 	err := port.Close()
 
 	if err == nil {
-		state.Push(Cons{Bool{true}, Nil{}})
+		state.Push(Cons{Car: Bool{Data: true}, Cdr: Nil{}})
 	} else {
-		state.Push(Cons{Bool{false}, Str{err.Error()}})
+		state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
 	}
 }
 
@@ -623,9 +624,9 @@ func (bp builtinPort) Run(state *State, args []Value) {
 
 func eofOrError(err error) Value {
 	if err == io.EOF {
-		return Cons{Bool{true}, Sym{"eof"}}
+		return Cons{Car: Bool{Data: true}, Cdr: Sym{Data: "eof"}}
 	} else {
-		return Cons{Bool{false}, Str{err.Error()}}
+		return Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}}
 	}
 }
 
@@ -637,7 +638,7 @@ func (builtinReadByte) Run(state *State, args []Value) {
 
 	b, err := r.ReadByte()
 	if err == nil {
-		state.Push(Cons{Bool{true}, Num{float64(b)}})
+		state.Push(Cons{Car: Bool{Data: true}, Cdr: Num{Data: float64(b)}})
 	} else {
 		state.Push(eofOrError(err))
 	}
@@ -653,7 +654,7 @@ func (builtinReadStr) Run(state *State, args []Value) {
 	bytes := make([]byte, size)
 	n, err := r.Read(bytes)
 	if err == nil {
-		state.Push(Cons{Bool{true}, Str{string(bytes[:n])}})
+		state.Push(Cons{Car: Bool{Data: true}, Cdr: Str{Data: string(bytes[:n])}})
 	} else {
 		state.Push(eofOrError(err))
 	}
@@ -667,7 +668,7 @@ func (builtinReadLine) Run(state *State, args []Value) {
 
 	line, err := r.ReadBytes('\n')
 	if err == nil {
-		state.Push(Cons{Bool{true}, Str{string(line[:len(line)-1])}})
+		state.Push(Cons{Car: Bool{Data: true}, Cdr: Str{Data: string(line[:len(line)-1])}})
 	} else {
 		state.Push(eofOrError(err))
 	}
@@ -680,9 +681,9 @@ func (builtinWriteByte) Run(state *State, args []Value) {
 	w := takePortOut(takePort("port", p))
 	err := w.WriteByte(byte(takeNum("byte", b)))
 	if err == nil {
-		state.Push(Cons{Bool{true}, Num{1}})
+		state.Push(Cons{Car: Bool{Data: true}, Cdr: Num{Data: 1}})
 	} else {
-		state.Push(Cons{Bool{false}, Str{err.Error()}})
+		state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
 	}
 }
 
@@ -694,9 +695,9 @@ func (builtinWriteStr) Run(state *State, args []Value) {
 	str := takeStr("string", s)
 	n, err := w.WriteString(str)
 	if err == nil || n > 0 {
-		state.Push(Cons{Bool{true}, Num{float64(n)}})
+		state.Push(Cons{Car: Bool{Data: true}, Cdr: Num{Data: float64(n)}})
 	} else {
-		state.Push(Cons{Bool{false}, Str{err.Error()}})
+		state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
 	}
 }
 
@@ -715,9 +716,9 @@ func (builtinWriteLine) Run(state *State, args []Value) {
 		}
 	}
 	if err == nil || n > 0 {
-		state.Push(Cons{Bool{true}, Num{float64(n)}})
+		state.Push(Cons{Car: Bool{Data: true}, Cdr: Num{Data: float64(n)}})
 	} else {
-		state.Push(Cons{Bool{false}, Str{err.Error()}})
+		state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
 	}
 }
 
@@ -728,9 +729,9 @@ func (builtinFlush) Run(state *State, args []Value) {
 	w := takePortOut(takePort("port", p))
 	err := w.Flush()
 	if err == nil {
-		state.Push(Cons{Bool{true}, Nil{}})
+		state.Push(Cons{Car: Bool{Data: true}, Cdr: Nil{}})
 	} else {
-		state.Push(Cons{Bool{false}, Str{err.Error()}})
+		state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
 	}
 }
 
@@ -742,7 +743,7 @@ func (b builtinArgs) Run(state *State, args []Value) {
 	takeNone("args", args)
 	var vs []Value
 	for _, arg := range b.args {
-		vs = append(vs, Str{arg})
+		vs = append(vs, Str{Data: arg})
 	}
 	state.Push(List(vs...))
 }
@@ -753,9 +754,9 @@ func (builtinEval) Run(state *State, args []Value) {
 	if len(args) == 1 {
 		ret, err := state.Context.Eval(args[0])
 		if err == nil {
-			state.Push(Cons{Bool{true}, ret})
+			state.Push(Cons{Car: Bool{Data: true}, Cdr: ret})
 		} else {
-			state.Push(Cons{Bool{false}, Str{err.Error()}})
+			state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
 		}
 		return
 	}
@@ -771,9 +772,9 @@ func (expand builtinMacroExpand) Run(state *State, args []Value) {
 	if len(args) == 1 {
 		ret, err := state.Context.MacroExpand(expand.recurse, args[0])
 		if err == nil {
-			state.Push(Cons{Bool{true}, ret})
+			state.Push(Cons{Car: Bool{Data: true}, Cdr: ret})
 		} else {
-			state.Push(Cons{Bool{false}, Str{err.Error()}})
+			state.Push(Cons{Car: Bool{Data: false}, Cdr: Str{Data: err.Error()}})
 		}
 		return
 	}
@@ -879,5 +880,5 @@ func checkExpected(name string, ok bool, v Value) {
 }
 
 func evaluationError(msg string) {
-	panic(EvaluationError{msg})
+	panic(EvaluationError{Msg: msg})
 }
