@@ -1,17 +1,18 @@
 package main
 
-//go:generate go run -mod vendor github.com/rakyll/statik -include=boot.lisp -src=rosetta-lisp -f
-
 import (
 	"bufio"
+	_ "embed"
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
-	"github.com/rakyll/statik/fs"
 	"github.com/yubrot/golisp"
-	_ "github.com/yubrot/golisp/golisp/statik"
 )
+
+//go:embed rosetta-lisp/boot.lisp
+var bootcode string
 
 func main() {
 	ctx := golisp.NewContext()
@@ -46,18 +47,8 @@ func main() {
 func initContext(ctx *golisp.Context, boot bool, args []string) {
 	registerBuiltins(ctx, args)
 	if boot {
-		statikFS, err := fs.New()
-		if err != nil {
-			panic(err)
-		}
-
-		r, err := statikFS.Open("/boot.lisp")
-		if err != nil {
-			panic(err)
-		}
-
-		buf := bufio.NewReader(r)
-		err = exec(ctx, buf)
+		buf := bufio.NewReader(strings.NewReader(bootcode))
+		err := exec(ctx, buf)
 		if err != nil {
 			panic(errors.New("initContext: " + err.Error()))
 		}
