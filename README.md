@@ -4,11 +4,13 @@ golisp is a Go version of [Rosetta Lisp](https://github.com/yubrot/rosetta-lisp)
 implementation.
 
 ```bash
-# install
-$ go get github.com/yubrot/golisp/golisp
+# Installation:
+# Unfortunately we cannot use go install github.com/yubrot/golisp/golisp@latest for now,
+# since this repository uses submodules.
+git clone https://github.com/yubrot/golisp
+cd golisp/golisp && go install
 
-# build
-$ go mod vendor
-$ go generate
-$ cd golisp && go build
+# Development:
+git clone https://github.com/yubrot/golisp
+cd golisp/golisp && go build
 ```
